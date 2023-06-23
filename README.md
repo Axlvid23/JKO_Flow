@@ -41,4 +41,4 @@ python3 EvaluateToy_JKOflow.py
 Evalaute toy model and plot results 
 ```
 python3 EvaluateToy_JKOflow.py
-``
+```
