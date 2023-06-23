@@ -1,5 +1,5 @@
 # JKO-Flow
-Pytorch implementation of JKO flow which as a continuous normalizing flow framework that eliminates the need for tuning hyperparameters.
+Pytorch implementation of JKO flow which as a continuous normalizing flow framework that eliminates the need for tuning the terminal cost hyperparameter.
 
 ## Associated Publication
 
