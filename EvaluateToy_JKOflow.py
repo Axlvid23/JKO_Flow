@@ -4,7 +4,7 @@ import argparse
 import datetime
 import sys
 sys.path.append('./src/ImplicitOT')
-from src.ImplicitOT_Utils import *
+from src.utils import *
 
 prec = torch.float32
 # device = torch.device('cuda:' + str(gpu) if torch.cuda.is_available() else 'cpu')
