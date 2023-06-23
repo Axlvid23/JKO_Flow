@@ -11,7 +11,7 @@ plt.rcParams['image.cmap'] = 'inferno'
 import sklearn
 import sklearn.datasets
 from sklearn.utils import shuffle as util_shuffle
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import Dataset, TensorDataset, DataLoader
 
 def getconfig():
     return ConfigOT()
@@ -22,40 +22,7 @@ class ConfigOT:
     os  - 'mac' , 'linux'
     """
     gpu = True
-    os = 'mac'
-
-def sample_rho0(n, mean, var):
-  dim = mean.shape[0]
-  return var*torch.randn(n, dim, device=device) + mean
-
-def makedirs(dirname):
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-def get_logger(logpath, filepath, package_files=[], displaying=True, saving=True, debug=False):
-    logger = logging.getLogger()
-    if debug:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
-    logger.setLevel(level)
-    if saving:
-        info_file_handler = logging.FileHandler(logpath, mode="a")
-        info_file_handler.setLevel(level)
-        logger.addHandler(info_file_handler)
-    if displaying:
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
-        logger.addHandler(console_handler)
-    logger.info(filepath)
-    with open(filepath, "r") as f:
-        logger.info(f.read())
-
-    for f in package_files:
-        logger.info(f)
-        with open(f, "r") as package_f:
-            logger.info(package_f.read())
-    return logger
+    os = 'linux'
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -202,70 +169,6 @@ def C(z):
     return -( torch.sum(  -0.5 * math.log(2*math.pi) - torch.pow(z[:,0:d],2) / 2  , 1 , keepdims=True ) + l.unsqueeze(1) )
 
 
-"""#---------------------------- Define Loss and OT Flow Problems---------------------------#"""
-
-def compute_loss(iter, net, x, nt, alphas, method='rk4'):
-    """
-    Evaluate loss function of JKO Flow problem.
-
-    :param x:       input data tensor nex-by-d
-    :param net:     neural network
-    :param nt:      number of time steps
-    :param method: string "rk1" or "rk4" Runge-Kutta schemes
-    :param alphas:    list of length 3, the alpha value multipliers
-    :return:
-        Jc - float, objective function value dot(alph,cs)
-        cs - list length 5, the five computed costs
-        x  - output data tensor nex-by-d
-    """
-    Jc , cs, x = OTFlowProblem(iter, x, net, [0,1], nt=nt, stepper=method, alph=alphas)
-    return Jc, cs, x
-
-def OTFlowProblem(iter, x, net, tspan , nt, stepper="rk4", alph =[1.0,1.0,1.0] ):
-    """
-    Evaluate objective function of JKO Flow problem.
-
-    :param x:       input data tensor nex-by-d
-    :param net:     neural network
-    :param tspan:   time range to integrate over, ex. [0.0 , 1.0]
-    :param nt:      number of time steps
-    :param stepper: string "rk1" or "rk4" Runge-Kutta schemes
-    :param alph:    list of length 3, the alpha value multipliers
-
-    :return:
-        total_cost  - integer, total cost using alphas (alph) provided
-        cs          -  list length 5, the five computed costs
-        z           - output data tensor nex-by-d
-    """
-    h = (tspan[1]-tspan[0]) / nt
-
-    # initialize "hidden" vector to propogate with all the additional dimensions for all the ODEs
-    if iter==0:
-      z = pad(x, (0, 3, 0, 0), value=0)
-      tk = tspan[0]
-    else:
-      z = x
-      tk = tspan[0]
-
-    if stepper=='rk4':
-        for k in range(nt):
-            z = stepRK4(odefun, z, net, alph, tk, tk + h)
-            tk += h
-    elif stepper=='rk1':
-        for k in range(nt):
-            z = stepRK1(odefun, z, net, alph, tk, tk + h)
-            tk += h
-
-    # ASSUME all examples are equally weighted
-    costL  = torch.mean(z[:,-2])
-    costC  = torch.mean(C(z))
-    costR  = torch.mean(z[:,-1])
-
-    cs = [costL, costC, costR]
-
-    return alph[0]*cs[0] + alph[1]*cs[1] + alph[2]*cs[2], cs, z.detach()
-
-
 def odefun(x, t, net, alph=[1.0,1.0,1.0]):
     """
     neural ODE combining the characteristics and log-determinant, the transport costs, and
@@ -291,6 +194,39 @@ def odefun(x, t, net, alph=[1.0,1.0,1.0]):
     dr = torch.abs(  -gradPhi[:,-1].unsqueeze(1) + alph[0] * dv  ) 
 
     return torch.cat( (dx,dl,dv,dr) , 1 )
+
+def sample_rho0(n, mean, var):
+  dim = mean.shape[0]
+  return var*torch.randn(n, dim, device=device) + mean
+
+def makedirs(dirname):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+def get_logger(logpath, filepath, package_files=[], displaying=True, saving=True, debug=False):
+    logger = logging.getLogger()
+    if debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    logger.setLevel(level)
+    if saving:
+        info_file_handler = logging.FileHandler(logpath, mode="a")
+        info_file_handler.setLevel(level)
+        logger.addHandler(info_file_handler)
+    if displaying:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
+        logger.addHandler(console_handler)
+    logger.info(filepath)
+    with open(filepath, "r") as f:
+        logger.info(f.read())
+
+    for f in package_files:
+        logger.info(f)
+        with open(f, "r") as package_f:
+            logger.info(package_f.read())
+    return logger
 
 def plot4(net, x, y, nt_val, sTitle="", doPaths=False):
     """
@@ -694,8 +630,6 @@ class Phi(nn.Module):
         self.c.weight.data = torch.zeros(self.c.weight.data.shape)
         self.c.bias.data   = torch.zeros(self.c.bias.data.shape)
 
-
-
     def forward(self, x):
         """ calculating Phi(s, theta)...not used in OT-Flow """
 
@@ -979,10 +913,6 @@ def mmd(x,y, indepth=False, alph=1.0):
 def compute_loss(iter, net, x, nt, alphas, method='rk4'): 
     Jc , cs, x = OTFlowProblem(iter, x, net, [0,1], nt=nt, stepper=method, alph=alphas)
     return Jc, cs, x
-
-prec = torch.float32
-device = 'cuda'
-cvt = lambda x: x.type(prec).to(device, non_blocking=True)
 
 def OTFlowProblem(iter, x, Phi, tspan , nt, stepper="rk4", alph =[1.0,1.0,1.0] ):
     """

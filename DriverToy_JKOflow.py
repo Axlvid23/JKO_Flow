@@ -6,12 +6,15 @@ plt.rcParams['image.cmap'] = 'inferno'
 import argparse
 import datetime
 import sys
-sys.path.append('./src/ImplicitOT')
+sys.path.append('./src/train_subproblem.py')
+sys.path.append('./src/utils.py')
 from src.train_subproblem import *
+from src.utils import *
 
 prec = torch.float32
-device = 'cuda'
+device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
 cvt = lambda x: x.type(prec).to(device, non_blocking=True)
+
 file = './logger.txt'
 with open(file, mode='a'): pass
 cf = getconfig()
@@ -26,11 +29,12 @@ if cf.gpu: # if gpu on platform
     def_viz_freq = max_epochs #setting plot frequency to once per subproblem
 
 else:  # if no gpu on platform, assume debugging on a local cpu
-    def_viz_freq = 100
-    def_batch    = 2000
-    def_niter    = 1000
-    n_subproblems  = 1
-    max_epochs   = int(2.5e2)
+    n_samples    = int(6000) #number of data samples
+    def_batch    = 2000 #batch size
+    def_niter    = 1500 #number of iterations
+    n_subproblems  = 5 #number of JKO flow iterations
+    max_epochs   = int(1e3) #maximum number of epochs
+    def_viz_freq = max_epochs #setting plot frequency to once per subproblem
 
 """#---------------------------- Choose 2d Toy problem ---------------------------#"""
 ### Select toy problem by choosing default dataset name
@@ -87,8 +91,6 @@ logger = get_logger(logpath=os.path.join(args.save, 'logs'), filepath='./logger.
 logger.info("start time: " + start_time)
 logger.info(args)
 
-device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
-
 """#---------------------------- JKO flow Model Training ---------------------------#"""
 log_msg = []
 itr = 0
@@ -96,7 +98,6 @@ n_epochs = 0
 n_subproblems_used = 0
 
 torch.set_default_dtype(prec)
-cvt = lambda x: x.type(prec).to(device, non_blocking=True)
 
 # neural network for the potential function Phi
 d      = 2

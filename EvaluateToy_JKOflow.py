@@ -3,45 +3,30 @@ plt.rcParams['image.cmap'] = 'inferno'
 import argparse
 import datetime
 import sys
-sys.path.append('./src/ImplicitOT')
+sys.path.append('./src/utils.py')
+sys.path.append('./src/train_subproblem.py')
 from src.utils import *
-
-prec = torch.float32
-# device = torch.device('cuda:' + str(gpu) if torch.cuda.is_available() else 'cpu')
-device = 'cuda'
-cvt = lambda x: x.type(prec).to(device, non_blocking=True)
-# device = torch.device('cuda:' + str(gpu) if torch.cuda.is_available() else 'cpu')
-# simplistic config file to make code platform-agnostic
+from src.train_subproblem import *
 
 file = './logger.txt'
 with open(file, mode='a'): pass
 
-def getconfig():
-    return ConfigOT()
-
-class ConfigOT:
-    """
-    gpu - True means GPU available on plaform , False means it's not; this is used for default values
-    os  - 'mac' , 'linux'
-    """
-    gpu = True
-    os = 'linux'
-
 cf = getconfig()
 
 if cf.gpu: # if gpu on platform
-    def_viz_freq = 1
-    n_samples    = int(6000)
-    def_batch    = 2000
-    def_niter    = 1500
-    n_subproblems  = 5
-    max_epochs   = int(1e3)
+    n_samples    = int(6000) #number of data samples
+    def_batch    = 2000 #batch size
+    def_niter    = 1500 #number of iterations
+    n_subproblems  = 5 #number of JKO flow iterations
+    max_epochs   = int(1e3) #maximum number of epochs
+    def_viz_freq = max_epochs #setting plot frequency to once per subproblem
 else:  # if no gpu on platform, assume debugging on a local cpu
-    def_viz_freq = 100
-    def_batch    = 2000
-    def_niter    = 1000
-    n_subproblems  = 5
-    max_epochs   = int(2.5e2)
+    n_samples    = int(6000) #number of data samples
+    def_batch    = 2000 #batch size
+    def_niter    = 1500 #number of iterations
+    n_subproblems  = 5 #number of JKO flow iterations
+    max_epochs   = int(1e3) #maximum number of epochs
+    def_viz_freq = max_epochs #setting plot frequency to once per subproblem
 
 parser = argparse.ArgumentParser('OT-Flow')
 """#---------------------------- Choose 2d Toy problem ---------------------------#"""
@@ -148,7 +133,6 @@ for i in range(count):
   state = torch.load(file_name,
                        map_location=torch.device(device))
   net.load_state_dict(state['model_state_dict'])
-  #sample_flow = integrate(sample_flow[:, 0:d], net, [1.0, 0.0], nt_val, stepper="rk4", alph=net.alph).detach()
   fx = integrate(x[:, 0:d], net, [0.0, 1.0], nt_val, stepper="rk4", alph=net.alph)
   finvfx = integrate(fx[:, 0:d], net, [1.0, 0.0], nt_val, stepper="rk4", alph=net.alph)
   genModel = integrate(y[:, 0:d], net, [1.0, 0.0], nt_val, stepper="rk4", alph=net.alph)
@@ -173,7 +157,6 @@ d2 = 1
 def normpdf(x):
     mu = torch.zeros(1, d, device=x.device, dtype=x.dtype)
     cov = torch.ones(1, d, device=x.device, dtype = x.dtype)  # diagonal of the covariance matrix
-
     denom = (2 * math.pi) ** (0.5 * d) * torch.sqrt(torch.prod(cov))
     num = torch.exp(-0.5 * torch.sum((x - mu) ** 2 / cov, 1, keepdims=True))
     return num / denom
@@ -182,8 +165,7 @@ save_samples_plot(y, img_directory + './gaussian.png')
 
 # ----------------------------------------------------------------------------------------------------------
         # Plot Density
-        # ----------------------------------------------------------------------------------------------------------
-        #title = "$density$"
+# ----------------------------------------------------------------------------------------------------------
 
 fig = plt.figure(figsize=(7, 7))
 ax = plt.subplot(1, 1, 1, aspect="equal")

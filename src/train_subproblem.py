@@ -1,10 +1,8 @@
 import time
 from src.utils import *
 import torch
-cf = getconfig()
 
 """#---------------------------- Train Phi Function ---------------------------#"""
-
 def train_Phi(optimizer, iter, alph, current_loader, nt, batch_size, lr, nn, max_epoch, weight_decay, outer_iter, tol=1e-6, print_freq=1, plot_freq = 500 ,verbose=True, val_loader = []):
     """
     Train the neural network for JKO Flow.
@@ -15,10 +13,10 @@ def train_Phi(optimizer, iter, alph, current_loader, nt, batch_size, lr, nn, max
     :param current_loader:  current data loader
     :param nt:              integer number of time steps
     :param batch_size:      integer batch size of data to use in the stochastic optimizer
-    :param lr:              float learning rate; default = 1e-2
+    :param lr:              float learning rate; default = 1e-2 (placeholder for scheduler)
     :param nn:              neural network
     :param max_epoch:       integer maximum number of epochs
-    :param weight_decay:    regularization parameter to keep from overfitting; default 1e-4
+    :param weight_decay:    regularization parameter to keep from overfitting; default 1e-4 (placeholder for scheduler)
     :param outer_iter:      integer quantity of JKO flow subproblems
     :param tol:             optimization tolerance
     :param print_freq:      print frequency
@@ -36,6 +34,9 @@ def train_Phi(optimizer, iter, alph, current_loader, nt, batch_size, lr, nn, max
         avg_grad_norm           - average gradient norm
         epoch + 1               - quantity of epochs counted
     """
+    prec = torch.float32
+    device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
+    cvt = lambda x: x.type(prec).to(device, non_blocking=True)
     time_meter = AverageMeter()
     h = 1 / nt
     avg_losses = []
@@ -107,7 +108,6 @@ def train_Phi(optimizer, iter, alph, current_loader, nt, batch_size, lr, nn, max
                     # save best set of parameters
                     if test_loss.item() < best_loss:
                         best_loss = test_loss.item()
-                        best_costs = test_costs
                         makedirs('experiments/cnf/toy')
                         best_params = nn.state_dict()
                     y = cvt(torch.randn(batch_size, nn.d)).to(device)  # sampling from the standard normal (rho_1)
