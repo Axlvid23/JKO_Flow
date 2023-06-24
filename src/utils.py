@@ -549,6 +549,56 @@ def inf_train_gen(data, rng=None, batch_size=200):
     else:
         return inf_train_gen("8gaussians", rng, batch_size)
 
+#Generate Miniboone Data
+def load_data(root_path):
+
+    data = np.load(root_path)
+    N_test = int(0.1 * data.shape[0])
+    data_test = data[-N_test:]
+    data = data[0:-N_test]
+    N_validate = int(0.1 * data.shape[0])
+    data_validate = data[-N_validate:]
+    data_train = data[0:-N_validate]
+
+    return data_train, data_validate, data_test
+
+def load_data_normalised(root_path):
+
+    data_train, data_validate, data_test = load_data(root_path)
+    data = np.vstack((data_train, data_validate))
+    mu = data.mean(axis=0)
+    s = data.std(axis=0)
+    data_train = (data_train - mu) / s
+    data_validate = (data_validate - mu) / s
+    data_test = (data_test - mu) / s
+
+    return data_train, data_validate, data_test
+
+def update_lr(optimizer, n_vals_without_improvement):
+    global ndecs
+    if ndecs == 0 and n_vals_without_improvement > args.early_stopping:
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = args.lr / args.lr_drop
+        ndecs = 1
+    elif ndecs == 1 and n_vals_without_improvement > args.early_stopping:
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = args.lr / args.lr_drop**2
+        ndecs = 2
+    else:
+        ndecs += 1
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = args.lr / args.lr_drop**ndecs
+
+def batch_iter(X, shuffle=True):
+    """
+    X: feature tensor (shape: num_instances x num_features)
+    """
+    if shuffle:
+        idxs = torch.randperm(X.shape[0])
+    else:
+        idxs = torch.arange(X.shape[0])
+    return X[idxs]
+
 # Neural Networks
 def antiderivTanh(x): # activation function aka the antiderivative of tanh
     return torch.abs(x) + torch.log(1+torch.exp(-2.0*torch.abs(x)))
