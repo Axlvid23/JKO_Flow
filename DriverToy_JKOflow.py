@@ -44,8 +44,7 @@ parser.add_argument(
     type=str, default='swissroll'
 )
 
-"""#---------------------------- More important hyperparams ---------------------------#"""
-
+"""#---------------------------- More important params ---------------------------#"""
 parser.add_argument("--nt"    , type=int, default=8, help="number of time steps")
 parser.add_argument("--nt_val", type=int, default=8, help="number of time steps for validation")
 """#---------------------------- Choose fixed alpha (alphaC) ---------------------------#"""

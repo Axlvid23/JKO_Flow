@@ -7,7 +7,6 @@ sys.path.append('./src/utils.py')
 sys.path.append('./src/train_subproblem.py')
 from src.utils import *
 from src.train_subproblem import *
-
 file = './logger.txt'
 with open(file, mode='a'): pass
 
