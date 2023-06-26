@@ -47,3 +47,7 @@ Train the Miniboone physics experiment
 ```
 python3 EvaluateMiniboone_JKOflow.py
 ```
+Evalaute Miniboone model and plot results 
+```
+python3 EvaluateMiniboone_JKOflow.py
+```
