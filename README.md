@@ -35,7 +35,7 @@ Toy problem type and hyperparameters may be selected in the EvaluateToy_JKOflow.
 
 Train a toy example
 ```
-python3 EvaluateToy_JKOflow.py
+python3 DriverToy_JKOflow.py
 ```
 Evalaute toy model and plot results 
 ```
@@ -45,7 +45,7 @@ python3 EvaluateToy_JKOflow.py
 
 Train the Miniboone physics experiment
 ```
-python3 EvaluateMiniboone_JKOflow.py
+python3 DriverMiniboone_JKOflow.py
 ```
 Evalaute Miniboone model and plot results 
 ```
