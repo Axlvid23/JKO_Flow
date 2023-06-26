@@ -29,7 +29,7 @@ Install all the requirements:
 pip install -r requirements.txt 
 ```
 
-## Toy problems
+## 2D Toy Experiments
 
 Toy problem type and hyperparameters may be selected in the EvaluateToy_JKOflow.py and python evaluateToy_OTflow.py.  In order to function properly, the same problem type and hyperparameters must be selected in both files.  
 
@@ -37,8 +37,13 @@ Train a toy example
 ```
 python3 EvaluateToy_JKOflow.py
 ```
-
 Evalaute toy model and plot results 
 ```
 python3 EvaluateToy_JKOflow.py
+```
+## Miniboone Physics Experiment
+
+Train the Miniboone physics experiment
+```
+python3 EvaluateMiniboone_JKOflow.py
 ```
