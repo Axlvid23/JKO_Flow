@@ -37,7 +37,7 @@ Train a toy example
 ```
 python3 DriverToy_JKOflow.py
 ```
-Evalaute toy model and plot results 
+Evaluate toy model and plot results 
 ```
 python3 EvaluateToy_JKOflow.py
 ```
@@ -47,7 +47,7 @@ Train the Miniboone physics experiment
 ```
 python3 DriverMiniboone_JKOflow.py
 ```
-Evalaute Miniboone model and plot results 
+Evaluate Miniboone model and plot results 
 ```
 python3 EvaluateMiniboone_JKOflow.py
 ```
